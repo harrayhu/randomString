@@ -22,6 +22,7 @@
         <script>
             function get_pypi_name() {
                 var ori = document.getElementById("ori").value;
+                ori = ori.trim();
                 // 查找内容
                 // golang：业务工程版本，去掉开头的英文v，将beta替换为b，去掉横线
                 // java：业务工程版本 去掉 -SNAPSHOT后缀之后，横线替换为加号
