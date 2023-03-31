@@ -1,0 +1,61 @@
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <script>
+            function randomNum(minNum, maxNum) {
+                switch(arguments.length) {
+                    case 1:
+                        return parseInt(Math.random()*minNum+1,10);
+                        break;
+                    case 2:
+                        return parseInt(Math.random()*(maxNum-minNum+1) + minNum, 10);
+                        break;
+                    default:
+                        return 0;
+                        break;
+                    } 
+            }
+
+            function random_name() {
+                var names = document.getElementsByName("names");
+                var checkedNames = [];
+                for (var i = 0; i < names.length; i++) {
+                    var nameCheckBox = names[i];
+                    if (nameCheckBox.checked) {
+                        checkedNames.push(nameCheckBox.value);
+                    }
+                }
+                var namesLength = checkedNames.length;
+                if (namesLength < 1) {
+                    alert("需要至少勾选一个名字！");
+                    return;
+                }
+                var randomInt = randomNum(0, namesLength-1);
+                var popValue = checkedNames[randomInt];
+                document.getElementById(popValue).checked = false;
+                var resultText = document.getElementById("nameResult").value;
+                document.getElementById("nameResult").value = resultText + popValue + ";";
+            }
+        </script>
+    </head>
+    <body>
+        <div>
+            <B>姓名列表：</B>
+        </div>
+        <div>
+            <input name="names" type="checkbox" id="harrayhu" value="harrayhu" checked />harrayhu<br />
+            <input name="names" type="checkbox" id="jennyxiang" value="jennyxiang" checked />jennyxiang<br />
+            <input name="names" type="checkbox" id="ravenzhang" value="ravenzhang" checked />ravenzhang<br />
+            <input name="names" type="checkbox" id="v_haottian" value="v_haottian" checked />v_haottian<br />
+            <input name="names" type="checkbox" id="v_shijiewan" value="v_shijiewan" checked />v_shijiewan<br />
+            <input name="names" type="checkbox" id="v_xuemiqin" value="v_xuemiqin" checked />v_xuemiqin<br />
+            <input name="names" type="checkbox" id="v_lllvhyang" value="v_lllvhyang" checked />v_lllvhyang<br />
+        </div>
+        <div>
+            <button onclick="random_name()">获取姓名</button>
+        </div>
+        <div>
+            <input type="text" id="nameResult" style="width: 600px;" disabled />
+        </div> 
+    </body>
+</html>
