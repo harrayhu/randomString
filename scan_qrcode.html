@@ -1,92 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>二维码扫描与Hex数据复制</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
+    <title>二维码扫描获取 Hex 数据</title>
+    <!-- 引入 quaggaJS -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <!-- 引入 jsQR -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
-        #video {
-            width: 100%;
-            max-width: 640px;
-            height: auto;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
         }
-        #result {
-            margin-top: 20px;
-            font-size: 18px;
-        }
-        #copyButton {
-            margin-top: 10px;
+
+        #scanButton {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
         }
-    </style>
-</head>
-<body>
-    <h1>二维码扫描与Hex数据复制</h1>
-    <video id="video" autoplay></video>
-    <div id="result"></div>
-    <button id="copyButton" style="display: none;">复制Hex数据</button>
 
-    <script>
-        const video = document.getElementById('video');
-        const resultDiv = document.getElementById('result');
-        const copyButton = document.getElementById('copyButton');
-        let hexData = '';
-
-        // 获取摄像头权限
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(function(stream) {
-                video.srcObject = stream;
-                video.play();
-                requestAnimationFrame(scanQRCode);
-            })
-            .catch(function(error) {
-                console.error('无法访问摄像头:', error);
-                resultDiv.innerText = '无法访问摄像头，请确保已授予权限。';
-            });
-
-        // 扫描二维码
-        function scanQRCode() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-            if (code) {
-                hexData = textToHex(code.data);
-                resultDiv.innerText = `Hex数据: ${hexData}`;
-                copyButton.style.display = 'block';
-            } else {
-                resultDiv.innerText = '未检测到二维码';
-                copyButton.style.display = 'none';
-            }
-            requestAnimationFrame(scanQRCode);
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
         }
 
-        // 将文本转换为Hex数据
-        function textToHex(text) {
+        #copyButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #interactive.viewport {
+            position: relative;
+            width: 100%;
+            height: auto;
+            overflow: hidden;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #interactive.viewport>canvas,
+        #interactive.viewport>video {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        canvas.drawing,
+        canvas.drawingBuffer {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 扫描按钮 -->
+    <button id="scanButton">点击扫描二维码</button>
+    <!-- 扫描区域 -->
+    <div id="interactive" class="viewport"></div>
+    <!-- 结果展示区域 -->
+    <div id="result"></div>
+    <!-- 复制按钮 -->
+    <button id="copyButton">复制 Hex 数据</button>
+
+    <script>
+        const scanButton = document.getElementById('scanButton');
+        const interactiveDiv = document.getElementById('interactive');
+        const resultDiv = document.getElementById('result');
+        const copyButton = document.getElementById('copyButton');
+
+        // 点击扫描按钮触发扫描
+        scanButton.addEventListener('click', function () {
+            // 初始化 QuaggaJS
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: interactiveDiv
+                },
+                decoder: {
+                    readers: ["qrcode_reader"]
+                }
+            }, function (err) {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log("初始化成功，开始扫描");
+                Quagga.start();
+            });
+
+            // 监听扫描结果
+            Quagga.onDetected(function (result) {
+                // 获取二维码内容
+                const code = result.codeResult.code;
+                // 将内容转换为 Hex 数据
+                const hexData = stringToHex(code);
+                // 显示结果
+                resultDiv.textContent = `Hex 数据: ${hexData}`;
+                // 隐藏扫描区域
+                interactiveDiv.style.display = 'none';
+                // 显示复制按钮
+                copyButton.style.display = 'inline-block';
+                // 停止扫描
+                Quagga.stop();
+
+                // 绑定复制事件
+                copyButton.addEventListener('click', function () {
+                    copyToClipboard(hexData);
+                });
+            });
+        });
+
+        // 将字符串转换为 Hex 数据
+        function stringToHex(str) {
             let hex = '';
-            for (let i = 0; i < text.length; i++) {
-                hex += text.charCodeAt(i).toString(16);
+            for (let i = 0; i < str.length; i++) {
+                const charCode = str.charCodeAt(i);
+                const hexCode = charCode.toString(16).padStart(2, '0');
+                hex += hexCode;
             }
             return hex;
         }
 
-        // 复制Hex数据到剪贴板
-        copyButton.addEventListener('click', function() {
-            navigator.clipboard.writeText(hexData)
-                .then(function() {
-                    alert('Hex数据已复制到剪贴板！');
-                })
-                .catch(function(error) {
-                    console.error('复制失败:', error);
-                });
-        });
+        // 复制文本到剪贴板
+        function copyToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Hex 数据已复制到剪贴板');
+        }
     </script>
 </body>
+
 </html>
