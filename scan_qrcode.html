@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码扫描与Hex数据复制</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
+    <style>
+        #videoContainer {
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            position: relative;
+        }
+        #video {
+            width: 100%;
+            height: auto;
+            transform: scaleX(-1); /* 镜像翻转 */
+        }
+        #scanBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border: 3px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0,255,0,0.5);
+        }
+        #result {
+            margin: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            word-break: break-all;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 10px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="videoContainer">
+        <video id="video" playsinline muted></video>
+        <div id="scanBox"></div>
+    </div>
+    <button onclick="startScan()">启动摄像头</button>
+    <div id="result"></div>
+    <button id="copyBtn" style="display:none;" onclick="copyHex()">复制Hex数据</button>
+
+    <script>
+        let video = document.getElementById('video');
+        let resultDiv = document.getElementById('result');
+        let copyBtn = document.getElementById('copyBtn');
+        let hexData = '';
+        let isScanning = false;
+
+        // iOS兼容处理：需要用户主动触发
+        async function startScan() {
+            if (!isScanning) {
+                try
